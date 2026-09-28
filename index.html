@@ -42,15 +42,6 @@
     cursor: pointer;
   }
   #toggleBtn:active { opacity: 0.8; }
-  #setupBtn {
-    width: 90%;
-    max-width: 22rem;
-    background: #3a7bfd;
-    color: white;
-    font-weight: 700;
-    cursor: pointer;
-  }
-  #uid { font-size: 0.8rem; color: #6a6a75; word-break: break-all; }
   .hidden { display: none; }
 </style>
 </head>
@@ -60,15 +51,10 @@
   <div id="label">Loading...</div>
   <div id="updated"></div>
 
-  <button id="setupBtn" class="hidden">This is Yousouf — tap to confirm</button>
   <button id="toggleBtn" class="hidden">Toggle status</button>
-  <div id="uid" class="hidden"></div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-  import {
-    getAuth, signInAnonymously, onAuthStateChanged
-  } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import {
     getDatabase, ref, onValue, set, serverTimestamp
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
@@ -87,16 +73,13 @@
   // ===========================================================
 
   const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
   const db = getDatabase(app);
   const statusRef = ref(db, "status");
 
   const emojiEl = document.getElementById("emoji");
   const labelEl = document.getElementById("label");
   const updatedEl = document.getElementById("updated");
-  const setupBtn = document.getElementById("setupBtn");
   const toggleBtn = document.getElementById("toggleBtn");
-  const uidEl = document.getElementById("uid");
 
   let currentDriving = false;
 
@@ -130,22 +113,7 @@
   const isAdmin = new URLSearchParams(location.search).has("admin");
 
   if (isAdmin) {
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setupBtn.classList.add("hidden");
-        toggleBtn.classList.remove("hidden");
-        uidEl.classList.remove("hidden");
-        uidEl.textContent = "Device ID: " + user.uid;
-      } else {
-        setupBtn.classList.remove("hidden");
-        toggleBtn.classList.add("hidden");
-        uidEl.classList.add("hidden");
-      }
-    });
-
-    setupBtn.addEventListener("click", () => {
-      signInAnonymously(auth);
-    });
+    toggleBtn.classList.remove("hidden");
 
     toggleBtn.addEventListener("click", () => {
       set(statusRef, { driving: !currentDriving, updatedAt: serverTimestamp() });
