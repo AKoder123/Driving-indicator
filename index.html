@@ -42,16 +42,6 @@
     cursor: pointer;
   }
   #toggleBtn:active { opacity: 0.8; }
-  #loginForm {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    width: 90%;
-    max-width: 20rem;
-  }
-  #loginForm input { background: #1c1c22; color: #f2f2f5; }
-  #loginForm button { background: #3a7bfd; color: white; }
-  #loginError { color: #ff6b6b; font-size: 0.9rem; min-height: 1.2em; }
   .hidden { display: none; }
 </style>
 </head>
@@ -61,20 +51,10 @@
   <div id="label">Loading...</div>
   <div id="updated"></div>
 
-  <form id="loginForm" class="hidden">
-    <input id="email" type="email" placeholder="Email" autocomplete="username" required>
-    <input id="password" type="password" placeholder="Password" autocomplete="current-password" required>
-    <button type="submit">Sign in</button>
-    <div id="loginError"></div>
-  </form>
-
   <button id="toggleBtn" class="hidden">Toggle status</button>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-  import {
-    getAuth, signInWithEmailAndPassword, onAuthStateChanged
-  } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import {
     getDatabase, ref, onValue, set, serverTimestamp
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
@@ -82,26 +62,23 @@
   // ==================== FIREBASE CONFIG ====================
   // Fill in with your Firebase project's web config.
   const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyB6TAwbmGWJBBxEkc8Ck0TlIhAG-53-sU0",
+    authDomain: "driving-indicator.firebaseapp.com",
+    databaseURL: "https://driving-indicator-default-rtdb.firebaseio.com", // TODO: verify once you create the Realtime Database
+    projectId: "driving-indicator",
+    storageBucket: "driving-indicator.firebasestorage.app",
+    messagingSenderId: "873119963796",
+    appId: "1:873119963796:web:ed829866bcd030ed0e7281"
   };
   // ===========================================================
 
   const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
   const db = getDatabase(app);
   const statusRef = ref(db, "status");
 
   const emojiEl = document.getElementById("emoji");
   const labelEl = document.getElementById("label");
   const updatedEl = document.getElementById("updated");
-  const loginForm = document.getElementById("loginForm");
-  const loginError = document.getElementById("loginError");
   const toggleBtn = document.getElementById("toggleBtn");
 
   let currentDriving = false;
@@ -136,24 +113,7 @@
   const isAdmin = new URLSearchParams(location.search).has("admin");
 
   if (isAdmin) {
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        loginForm.classList.add("hidden");
-        toggleBtn.classList.remove("hidden");
-      } else {
-        loginForm.classList.remove("hidden");
-        toggleBtn.classList.add("hidden");
-      }
-    });
-
-    loginForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      loginError.textContent = "";
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      signInWithEmailAndPassword(auth, email, password)
-        .catch((err) => { loginError.textContent = err.message; });
-    });
+    toggleBtn.classList.remove("hidden");
 
     toggleBtn.addEventListener("click", () => {
       set(statusRef, { driving: !currentDriving, updatedAt: serverTimestamp() });
