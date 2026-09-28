@@ -42,16 +42,15 @@
     cursor: pointer;
   }
   #toggleBtn:active { opacity: 0.8; }
-  #loginForm {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
+  #setupBtn {
     width: 90%;
-    max-width: 20rem;
+    max-width: 22rem;
+    background: #3a7bfd;
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
   }
-  #loginForm input { background: #1c1c22; color: #f2f2f5; }
-  #loginForm button { background: #3a7bfd; color: white; }
-  #loginError { color: #ff6b6b; font-size: 0.9rem; min-height: 1.2em; }
+  #uid { font-size: 0.8rem; color: #6a6a75; word-break: break-all; }
   .hidden { display: none; }
 </style>
 </head>
@@ -61,19 +60,14 @@
   <div id="label">Loading...</div>
   <div id="updated"></div>
 
-  <form id="loginForm" class="hidden">
-    <input id="email" type="email" placeholder="Email" autocomplete="username" required>
-    <input id="password" type="password" placeholder="Password" autocomplete="current-password" required>
-    <button type="submit">Sign in</button>
-    <div id="loginError"></div>
-  </form>
-
+  <button id="setupBtn" class="hidden">This is Yousouf — tap to confirm</button>
   <button id="toggleBtn" class="hidden">Toggle status</button>
+  <div id="uid" class="hidden"></div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import {
-    getAuth, signInWithEmailAndPassword, onAuthStateChanged
+    getAuth, signInAnonymously, onAuthStateChanged
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import {
     getDatabase, ref, onValue, set, serverTimestamp
@@ -100,9 +94,9 @@
   const emojiEl = document.getElementById("emoji");
   const labelEl = document.getElementById("label");
   const updatedEl = document.getElementById("updated");
-  const loginForm = document.getElementById("loginForm");
-  const loginError = document.getElementById("loginError");
+  const setupBtn = document.getElementById("setupBtn");
   const toggleBtn = document.getElementById("toggleBtn");
+  const uidEl = document.getElementById("uid");
 
   let currentDriving = false;
 
@@ -138,21 +132,19 @@
   if (isAdmin) {
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        loginForm.classList.add("hidden");
+        setupBtn.classList.add("hidden");
         toggleBtn.classList.remove("hidden");
+        uidEl.classList.remove("hidden");
+        uidEl.textContent = "Device ID: " + user.uid;
       } else {
-        loginForm.classList.remove("hidden");
+        setupBtn.classList.remove("hidden");
         toggleBtn.classList.add("hidden");
+        uidEl.classList.add("hidden");
       }
     });
 
-    loginForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      loginError.textContent = "";
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      signInWithEmailAndPassword(auth, email, password)
-        .catch((err) => { loginError.textContent = err.message; });
+    setupBtn.addEventListener("click", () => {
+      signInAnonymously(auth);
     });
 
     toggleBtn.addEventListener("click", () => {
