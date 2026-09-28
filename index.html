@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0b0f">
+<title>Yousouf Status</title>
+<link rel="manifest" href="manifest.json">
+<style>
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: #0b0b0f;
+    color: #f2f2f5;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    box-sizing: border-box;
+    text-align: center;
+  }
+  #emoji { font-size: 6rem; line-height: 1; }
+  #label { font-size: 2rem; font-weight: 700; }
+  #updated { font-size: 1rem; color: #9a9aa5; }
+  button, input {
+    font-size: 1.25rem;
+    padding: 0.9rem 1.2rem;
+    border-radius: 0.75rem;
+    border: none;
+  }
+  #toggleBtn {
+    width: 90%;
+    max-width: 22rem;
+    background: #3a7bfd;
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  #toggleBtn:active { opacity: 0.8; }
+  #loginForm {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 90%;
+    max-width: 20rem;
+  }
+  #loginForm input { background: #1c1c22; color: #f2f2f5; }
+  #loginForm button { background: #3a7bfd; color: white; }
+  #loginError { color: #ff6b6b; font-size: 0.9rem; min-height: 1.2em; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+  <div id="emoji">🚗</div>
+  <div id="label">Loading...</div>
+  <div id="updated"></div>
+
+  <form id="loginForm" class="hidden">
+    <input id="email" type="email" placeholder="Email" autocomplete="username" required>
+    <input id="password" type="password" placeholder="Password" autocomplete="current-password" required>
+    <button type="submit">Sign in</button>
+    <div id="loginError"></div>
+  </form>
+
+  <button id="toggleBtn" class="hidden">Toggle status</button>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+  import {
+    getAuth, signInWithEmailAndPassword, onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+  import {
+    getDatabase, ref, onValue, set, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+
+  // ==================== FIREBASE CONFIG ====================
+  // Fill in with your Firebase project's web config.
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+  // ===========================================================
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getDatabase(app);
+  const statusRef = ref(db, "status");
+
+  const emojiEl = document.getElementById("emoji");
+  const labelEl = document.getElementById("label");
+  const updatedEl = document.getElementById("updated");
+  const loginForm = document.getElementById("loginForm");
+  const loginError = document.getElementById("loginError");
+  const toggleBtn = document.getElementById("toggleBtn");
+
+  let currentDriving = false;
+
+  onValue(statusRef, (snap) => {
+    const data = snap.val() || { driving: false, updatedAt: null };
+    currentDriving = !!data.driving;
+    emojiEl.textContent = currentDriving ? "🚗" : "🅿️";
+    labelEl.textContent = currentDriving ? "On the road" : "Arrived";
+    updatedEl.textContent = data.updatedAt ? "updated " + timeAgo(data.updatedAt) + " ago" : "";
+  });
+
+  setInterval(() => {
+    // re-render the "X min ago" text on a tick, re-reading last known value
+    onValue(statusRef, (snap) => {
+      const data = snap.val();
+      if (data && data.updatedAt) {
+        updatedEl.textContent = "updated " + timeAgo(data.updatedAt) + " ago";
+      }
+    }, { onlyOnce: true });
+  }, 30000);
+
+  function timeAgo(ts) {
+    const seconds = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+    if (seconds < 60) return seconds + "s";
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return minutes + "m";
+    const hours = Math.floor(minutes / 60);
+    return hours + "h";
+  }
+
+  const isAdmin = new URLSearchParams(location.search).has("admin");
+
+  if (isAdmin) {
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        loginForm.classList.add("hidden");
+        toggleBtn.classList.remove("hidden");
+      } else {
+        loginForm.classList.remove("hidden");
+        toggleBtn.classList.add("hidden");
+      }
+    });
+
+    loginForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      loginError.textContent = "";
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      signInWithEmailAndPassword(auth, email, password)
+        .catch((err) => { loginError.textContent = err.message; });
+    });
+
+    toggleBtn.addEventListener("click", () => {
+      set(statusRef, { driving: !currentDriving, updatedAt: serverTimestamp() });
+    });
+  }
+</script>
+</body>
+</html>
