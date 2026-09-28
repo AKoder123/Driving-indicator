@@ -13,6 +13,7 @@
     background: #0b0b0f;
     color: #f2f2f5;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    transition: background 0.4s;
   }
   body {
     display: flex;
@@ -24,8 +25,16 @@
     box-sizing: border-box;
     text-align: center;
   }
+  body.driving { background: #1a0000; }
+  body.arrived { background: #001a08; }
   #emoji { font-size: 6rem; line-height: 1; }
   #label { font-size: 2rem; font-weight: 700; }
+  #label.driving { color: #ff3b30; animation: pulse 1.2s ease-in-out infinite; }
+  #label.arrived { color: #34c759; }
+  @keyframes pulse {
+    0%, 100% { text-shadow: 0 0 10px rgba(255, 59, 48, 0.6); }
+    50% { text-shadow: 0 0 28px rgba(255, 59, 48, 1); }
+  }
   #updated { font-size: 1rem; color: #9a9aa5; }
   button, input {
     font-size: 1.25rem;
@@ -87,7 +96,11 @@
     const data = snap.val() || { driving: false, updatedAt: null };
     currentDriving = !!data.driving;
     emojiEl.textContent = currentDriving ? "🚗" : "🅿️";
-    labelEl.textContent = currentDriving ? "On the road" : "Arrived";
+    labelEl.textContent = currentDriving ? "Yousouf on the road" : "Arrived — safe";
+    labelEl.classList.toggle("driving", currentDriving);
+    labelEl.classList.toggle("arrived", !currentDriving);
+    document.body.classList.toggle("driving", currentDriving);
+    document.body.classList.toggle("arrived", !currentDriving);
     updatedEl.textContent = data.updatedAt ? "updated " + timeAgo(data.updatedAt) + " ago" : "";
   });
 
